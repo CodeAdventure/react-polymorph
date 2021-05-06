@@ -74,7 +74,7 @@
     "identity-obj-proxy": "3.0.0",
     "jest": "25.1.0",
     "jest-enzyme": "7.1.2",
-    "lodash": "4.17.19",
+    "lodash": "4.17.21",
     "node-sass": "4.13.1",
     "nodemon": "1.12.1",
     "prettier": "2.0.5",
