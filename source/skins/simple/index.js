@@ -11,6 +11,7 @@ import { InfiniteScrollSkin } from './InfiniteScrollSkin';
 import { InputSkin } from './InputSkin';
 import { LinkSkin } from './LinkSkin';
 import { LoadingSpinnerSkin } from './LoadingSpinnerSkin';
+import { MnemonicEntrySkin } from './MnemonicEntrySkin';
 import { ModalSkin } from './ModalSkin';
 import { OptionsSkin } from './OptionsSkin';
 import { PasswordInputSkin } from './PasswordInputSkin';
@@ -37,6 +38,7 @@ export const SimpleSkins = {
   [IDENTIFIERS.INPUT]: InputSkin,
   [IDENTIFIERS.LINK]: LinkSkin,
   [IDENTIFIERS.LOADING_SPINNER]: LoadingSpinnerSkin,
+  [IDENTIFIERS.MNEMONIC_ENTRY]: MnemonicEntrySkin,
   [IDENTIFIERS.MODAL]: ModalSkin,
   [IDENTIFIERS.OPTIONS]: OptionsSkin,
   [IDENTIFIERS.PASSWORD_INPUT]: PasswordInputSkin,

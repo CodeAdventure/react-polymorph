@@ -1,0 +1,140 @@
+@import "theme";
+
+// OVERRIDABLE CONFIGURATION VARIABLES
+
+// mnemonicentry
+$mnemonicentry-bg-color: var(--rp-mnemonicentry-bg-color, #edf0f3) !default;
+
+// label
+$mnemonicentry-label-font-family: var(--rp-mnemonicentry-label-font-family, $theme-font-medium, sans-serif) !default;
+$mnemonicentry-label-font-size: var(--rp-mnemonicentry-label-font-size, 16px) !default;
+$mnemonicentry-label-text-color: var(--rp-mnemonicentry-label-text-color, #5e6066) !default;
+$mnemonicentry-label-margin: var(--rp-mnemonicentry-label-margin, 0 0 0 10px) !default;
+
+// words entered 
+$mnemonicentry-words-entered-font-family: var(--rp-mnemonicentry-words-entered-font-family, $theme-font-medium, sans-serif) !default;
+$mnemonicentry-words-entered-font-size: var(--rp-mnemonicentry-words-entered-font-size, 16px) !default;
+$mnemonicentry-words-entered-text-color: var(--rp-mnemonicentry-words-entered-text-color, #5e6066) !default;
+$mnemonicentry-words-entered-margin: var(--rp-mnemonicentry-words-entered-margin, 0 10px 0 0) !default;
+
+// mnemonic word 
+$mnemonicentry-mnemonic-word-font-family: var(--rp-mnemonicentry-mnemonic-word-font-family, $theme-font-medium, sans-serif) !default;
+$mnemonicentry-mnemonic-word-font-size: var(--rp-mnemonicentry-mnemonic-word-font-size, 16px) !default;
+$mnemonicentry-mnemonic-word-text-color: var(--rp-mnemonicentry-mnemonic-word-text-color, #5e6066) !default;
+
+.root {
+ position: relative;
+}
+
+.labelWrapper {
+ align-items: center;
+ display: flex;
+ flex-direction: row;
+ justify-content: space-between;
+}
+
+.label {
+ color: $mnemonicentry-label-text-color;
+ display: block;
+ font-family: $mnemonicentry-label-font-family, sans-serif;
+ font-size: $mnemonicentry-label-font-size;
+ font-weight: 600;
+ margin: $mnemonicentry-label-margin;
+}
+
+.wordsEntered {
+ color: $mnemonicentry-words-entered-text-color;
+ display: block;
+ font-family: $mnemonicentry-words-entered-font-family, sans-serif;
+ font-size: $mnemonicentry-words-entered-font-size;
+ font-weight: 300;
+ margin: $mnemonicentry-words-entered-margin;
+}
+
+.columnsWrapper {
+ background-color: $mnemonicentry-bg-color;
+ display: grid;
+ grid-template-columns: repeat(var(--rp-mnemonicentry-number-of-columns), 1fr);
+ margin-top: 15px;
+ padding: 15px;
+}
+
+.columnWrapper {
+ &.disabled {
+  &:hover {
+   cursor: default;
+  }
+ }
+ &:not(.disabled) {
+  &:hover {
+   cursor: pointer;
+  }
+ }
+}
+
+.column {
+ align-items: flex-start;
+ display: flex;
+ flex-direction: column;
+ justify-content: center;
+ position: relative;
+}
+
+.columnCover {
+ &.blurred {
+  align-items: flex-start;
+  padding-left: 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  &:after {
+   content: url("./assets/eye.svg");
+  }
+ }
+
+ &.visible {
+  display: none;
+ }
+}
+
+.word {
+ border-bottom: 1px solid $mnemonicentry-mnemonic-word-text-color;
+ color: $mnemonicentry-mnemonic-word-text-color;
+ display: flex;
+ flex-direction: row;
+ justify-content: flex-start;
+ align-items: center;
+ font-family: $mnemonicentry-mnemonic-word-font-family;
+ font-size: $mnemonicentry-mnemonic-word-font-size;
+ margin-top: 5px;
+ padding-bottom: 3px;
+ min-width: 150px;
+ width: 150px;
+
+ &.blurred {
+  filter: blur(4px);
+  -webkit-filter: blur(4px);
+ }
+}
+
+.wordInput {
+ background-color: transparent;
+ box-shadow: none;
+ border: none;
+ color: $mnemonicentry-mnemonic-word-text-color;
+ font-family: $mnemonicentry-mnemonic-word-font-family;
+ font-size: $mnemonicentry-mnemonic-word-font-size;
+ margin-left: 5px;
+ width: 150px;
+ &:focus,
+ &:active {
+  outline: none;
+ }
+
+ &.blurred {
+  cursor: pointer;
+ }
+}

@@ -11,6 +11,7 @@ import './Input.stories';
 import './Link.stories';
 import './Layout.stories';
 import './LoadingSpinner.stories';
+import './MnemonicEntry.stories';
 import './Modal.stories';
 import './NumericInput.stories';
 import './Options.stories';
