@@ -49,6 +49,7 @@ type State = {
   inputValue: string,
   mouseIsOverOptions: boolean,
   selectedOptions: Array<any>,
+  isRemoveWordClicked: boolean,
 };
 
 class AutocompleteBase extends Component<AutocompleteProps, State> {
@@ -101,6 +102,7 @@ class AutocompleteBase extends Component<AutocompleteProps, State> {
       filteredOptions:
         sortAlphabetically && options ? options.sort() : options || [],
       isOpen: false,
+      isRemoveWordClicked: false,
       mouseIsOverOptions: false,
       composedTheme: composeTheme(
         addThemeId(theme || context.theme, themeId),
@@ -118,7 +120,12 @@ class AutocompleteBase extends Component<AutocompleteProps, State> {
 
   clear = () => this._removeOptions();
 
-  focus = () => this.handleAutocompleteClick();
+  focus = () => {
+    const { inputElement } = this;
+    if (inputElement && inputElement.current) {
+      inputElement.current.focus();
+    }
+  };
 
   open = () => this.setState({ isOpen: true });
 
@@ -137,32 +144,32 @@ class AutocompleteBase extends Component<AutocompleteProps, State> {
   };
 
   toggleMouseLocation = () =>
-    this.setState((prevState) => ({ mouseIsOverOptions: !prevState.mouseIsOverOptions }));
+    this.setState((prevState) => ({
+      mouseIsOverOptions: !prevState.mouseIsOverOptions,
+    }));
 
   handleAutocompleteClick = () => {
-    const { inputElement } = this;
-    if (inputElement && inputElement.current) {
-      inputElement.current.focus();
-    }
-    // toggle options open/closed
-    this.toggleOpen();
+    this.focus();
   };
 
   onKeyDown = (event: SyntheticKeyboardEvent<>) => {
-    if (
-      // Check for backspace in order to delete the last selected option
-      event.keyCode === 8 &&
-      !event.target.value &&
-      this.state.selectedOptions.length
-    ) {
-      // Remove last selected option
-      this.removeOption(this.state.selectedOptions.length - 1, event);
-    } else if (event.keyCode === 27) {
-      // ESCAPE key: Stops propagation & modal closing
-      event.stopPropagation();
-    } else if (event.keyCode === 13) {
-      // ENTER key: Opens suggestions
-      this.open();
+    if (event) {
+      if (
+        // Check for backspace in order to delete the last selected option
+        event.keyCode === 8 &&
+        !event.target.value &&
+        this.state.selectedOptions.length
+      ) {
+        // Remove last selected option
+        this.close();
+        this.removeOption(this.state.selectedOptions.length - 1);
+      } else if (event.keyCode === 27) {
+        // ESCAPE key: Stops propagation & modal closing
+        event.stopPropagation();
+      } else if (event.keyCode === 13) {
+        // ENTER key: Opens suggestions
+        this.open();
+      }
     }
   };
 
@@ -174,24 +181,22 @@ class AutocompleteBase extends Component<AutocompleteProps, State> {
     this._setInputValue(value);
     if (hasMultipleValues) {
       this.open();
-      setTimeout(() => {
-        this.updateSelectedOptions(event, multipleValues);
-      }, 0);
     }
+    this.updateSelectedOptions(multipleValues, multipleValues.length === 1);
   };
 
   // passed to Options onChange handler in AutocompleteSkin
-  handleChange = (option: any, event: SyntheticEvent<>) => {
-    this.updateSelectedOptions(event, option);
+  handleChange = (option: any) => {
+    this.updateSelectedOptions(option);
   };
 
   updateSelectedOptions = (
-    event: SyntheticEvent<>,
-    selectedOption: any = null
+    addedOption: string | Array<string>,
+    singleInput?: boolean
   ) => {
     const { maxSelections, multipleSameSelections, options } = this.props;
     const { selectedOptions, isOpen } = this.state;
-    let { filteredOptions } = this.state;
+    const { filteredOptions } = this.state;
     const canMoreOptionsBeSelected =
       maxSelections != null ? selectedOptions.length < maxSelections : true;
     const areFilteredOptionsAvailable =
@@ -201,57 +206,71 @@ class AutocompleteBase extends Component<AutocompleteProps, State> {
       !maxSelections ||
       (canMoreOptionsBeSelected && areFilteredOptionsAvailable)
     ) {
-      if (!selectedOption || !selectedOption.length) return;
-      const option = _.isString(selectedOption) ?
-        selectedOption.trim() : selectedOption.filter(item => item);
+      if (!addedOption || !addedOption.length) return;
+      const option = _.isString(addedOption)
+        ? addedOption.trim()
+        : addedOption.filter((item) => item !== '');
       const newSelectedOptions: Array<string> = [...selectedOptions];
+
       if (option && Array.isArray(option)) {
-        filteredOptions = options;
-        option.forEach(item => {
-          const optionCanBeSelected = multipleSameSelections &&
-            filteredOptions.includes(item) ||
-            (filteredOptions.includes(item) &&
-            !selectedOptions.includes(item) &&
-            !newSelectedOptions.includes(item));
-          if (!optionCanBeSelected && !skipValueSelection) {
+        option.forEach((item) => {
+          const optionCanBeSelected =
+            (multipleSameSelections &&
+              options.includes(item) &&
+              !singleInput &&
+              option.length > 1) ||
+            (options.includes(item) &&
+              !selectedOptions.includes(item) &&
+              !newSelectedOptions.includes(item) &&
+              option.length > 1);
+          if (
+            (!optionCanBeSelected && !skipValueSelection) ||
+            (singleInput && !selectedOptions.length)
+          ) {
             this._setInputValue(item, true);
             skipValueSelection = true;
             return;
           }
-          if (item &&
+          if (
+            item &&
             optionCanBeSelected &&
-            isOpen && !skipValueSelection &&
-            newSelectedOptions.length < maxSelections) {
+            isOpen &&
+            !skipValueSelection &&
+            newSelectedOptions.length < maxSelections
+          ) {
             newSelectedOptions.push(item);
           }
         });
       } else {
-        const optionCanBeSelected = multipleSameSelections ||
-          !selectedOptions.includes(option);
+        const optionCanBeSelected =
+          multipleSameSelections || !selectedOptions.includes(option);
         if (option && optionCanBeSelected && isOpen) {
           newSelectedOptions.push(option);
+          skipValueSelection = false;
         }
       }
-      this.selectionChanged(newSelectedOptions, event);
-      this.setState({ selectedOptions: newSelectedOptions, isOpen: false });
+      this.selectionChanged(newSelectedOptions);
+      this.setState({ selectedOptions: newSelectedOptions });
+    } else {
+      skipValueSelection = true;
     }
     if (!skipValueSelection) {
       this._setInputValue('');
     }
   };
 
-  removeOption = (index: number, event: SyntheticEvent<>) => {
+  removeOption = (index: number) => {
+    console.log(index);
     const { selectedOptions } = this.state;
     _.pullAt(selectedOptions, index);
-    this.selectionChanged(selectedOptions, event);
+    this.close();
+    this.selectionChanged(selectedOptions);
     this.setState({ selectedOptions });
+    this.focus();
   };
 
-  selectionChanged = (
-    selectedOptions: Array<any>,
-    event: SyntheticEvent<any>
-  ) => {
-    if (this.props.onChange) this.props.onChange(selectedOptions, event);
+  selectionChanged = (selectedOptions: Array<any>) => {
+    if (this.props.onChange) this.props.onChange(selectedOptions);
   };
 
   // returns an object containing props, theme, and method handlers
@@ -267,10 +286,10 @@ class AutocompleteBase extends Component<AutocompleteProps, State> {
       isOpen,
       selectedOptions,
       theme: composedTheme[themeId],
-      removeSelection: (index: number, event: SyntheticEvent<>) =>
+      removeSelection: (index: number) =>
         // the user's custom removeSelection event handler is composed with
         // the internal functionality of Autocomplete (this.removeOption)
-        composeFunctions(removeSelection, this.removeOption)(index, event),
+        composeFunctions(removeSelection, this.removeOption)(index),
     };
   };
 
@@ -369,12 +388,15 @@ class AutocompleteBase extends Component<AutocompleteProps, State> {
     const multipleValues = value.split(' ');
     if (multipleValues && multipleValues.length > 1) {
       let selectedOptions = [];
-      multipleValues.forEach(itemValue => {
+      multipleValues.forEach((itemValue) => {
         const filteredValue = this._filterInvalidChars(itemValue);
-        selectedOptions = [...selectedOptions, ...this._filterOptions(filteredValue)];
+        selectedOptions = [
+          ...selectedOptions,
+          ...this._filterOptions(filteredValue),
+        ];
       });
       this.setState({
-        isOpen: true,
+        isOpen: !!multipleValues.length,
         inputValue: '',
         filteredOptions: Array.from(new Set(selectedOptions)),
       });
@@ -382,7 +404,7 @@ class AutocompleteBase extends Component<AutocompleteProps, State> {
       const filteredValue = this._filterInvalidChars(value);
       const filteredOptions = this._filterOptions(filteredValue);
       this.setState({
-        isOpen: !!value,
+        isOpen: value === '' ? false : !!value,
         inputValue: filteredValue,
         filteredOptions,
       });

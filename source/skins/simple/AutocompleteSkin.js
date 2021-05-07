@@ -67,7 +67,10 @@ export const AutocompleteSkin = (props: Props) => {
               role="presentation"
               aria-hidden
               className={theme.selectedWordRemoveButton}
-              onClick={props.removeOption.bind(null, index)}
+              onClick={(e) => {
+                e.stopPropagation();
+                props.removeOption(index);
+              }}
             >
               &times;
             </span>
